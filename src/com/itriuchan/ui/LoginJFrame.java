@@ -1,5 +1,6 @@
 package com.itriuchan.ui;
 
+import cn.hutool.core.io.FileUtil;
 import com.itriuchan.bean.User;
 import com.itriuchan.util.CodeUtil;
 
@@ -7,14 +8,11 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.List;
 
 public class LoginJFrame extends JFrame implements MouseListener {
 
-    static ArrayList<User> allUsers = new ArrayList<>();
-    static {
-        allUsers.add(new User("test1","123"));
-        allUsers.add(new User("test2","123"));
-    }
+    ArrayList<User> allUsers = new ArrayList<>();
 
 
     JButton login = new JButton();
@@ -30,6 +28,9 @@ public class LoginJFrame extends JFrame implements MouseListener {
 
 
     public LoginJFrame() {
+        //读取本地文件信息
+        readUserInfo();
+
         //初始化界面
         initJFrame();
 
@@ -37,6 +38,18 @@ public class LoginJFrame extends JFrame implements MouseListener {
         initView();
 
         this.setVisible(true);
+    }
+
+    private void readUserInfo() {
+        List<String> userInfoStrList = FileUtil.readUtf8Lines("E:\\Develop\\Idea\\Empty proj\\Puzzle-Game\\userInfo.txt");
+        for (String str : userInfoStrList) {
+            String[] userInfoArr = str.split("&");
+            String name = userInfoArr[0].split("=")[1];
+            String password = userInfoArr[1].split("=")[1];
+            User user = new User(name,password);
+            allUsers.add(user);
+        }
+        System.out.println(allUsers);
     }
 
     public void initView() {
@@ -121,7 +134,6 @@ public class LoginJFrame extends JFrame implements MouseListener {
     }
 
 
-
     //点击
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -135,8 +147,6 @@ public class LoginJFrame extends JFrame implements MouseListener {
 
             //创建一个User对象
             User userInfo = new User(usernameInput, passwordInput);
-            //System.out.println("用户输入的用户名为" + usernameInput);
-            //System.out.println("用户输入的密码为" + passwordInput);
 
             if (codeInput.length() == 0) {
                 showJDialog("验证码不能为空");
@@ -163,6 +173,8 @@ public class LoginJFrame extends JFrame implements MouseListener {
             }
         } else if (e.getSource() == register) {
             //System.out.println("点击了注册按钮");
+            this.setVisible(false);
+            new RegisterJFrame(allUsers);
         } else if (e.getSource() == rightCode) {
             System.out.println("更换验证码");
             //获取一个新的验证码
@@ -227,10 +239,10 @@ public class LoginJFrame extends JFrame implements MouseListener {
     }
 
     //判断用户在集合中是否存在
-    public boolean contains(User userInput){
+    public boolean contains(User userInput) {
         for (int i = 0; i < allUsers.size(); i++) {
             User rightUser = allUsers.get(i);
-            if(userInput.getUsername().equals(rightUser.getUsername()) && userInput.getPassword().equals(rightUser.getPassword())){
+            if (userInput.getUsername().equals(rightUser.getUsername()) && userInput.getPassword().equals(rightUser.getPassword())) {
                 //有相同的代表存在，返回true，后面的不需要再比了
                 return true;
             }
