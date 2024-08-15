@@ -3,10 +3,15 @@ package com.itriuchan.ui;
 import cn.hutool.core.io.FileUtil;
 import com.itriuchan.bean.User;
 import com.itriuchan.util.CodeUtil;
+import com.itriuchan.util.DatabaseUtil;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +56,7 @@ public class LoginJFrame extends JFrame implements MouseListener {
         }
         System.out.println(allUsers);
     }
+
 
     public void initView() {
         //1. 添加用户名文字
@@ -160,7 +166,7 @@ public class LoginJFrame extends JFrame implements MouseListener {
 
             } else if (!codeInput.equalsIgnoreCase(rightCode.getText())) {
                 showJDialog("验证码输入错误");
-            } else if (contains(userInfo)) {
+            } else if (checkUserInDatabase(usernameInput,passwordInput)) {
                 //System.out.println("用户名和密码正确可以开始玩游戏了");
                 //关闭当前登录界面
                 this.setVisible(false);
@@ -180,6 +186,21 @@ public class LoginJFrame extends JFrame implements MouseListener {
             //获取一个新的验证码
             String code = CodeUtil.getCode();
             rightCode.setText(code);
+        }
+    }
+
+    // 新增方法：从数据库中验证用户
+    private boolean checkUserInDatabase(String username, String password) {
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE username = ? AND password = ?")) {
+            ps.setString(1, username);
+            ps.setString(2, password);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // 如果有结果，则用户验证成功
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

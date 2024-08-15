@@ -2,10 +2,15 @@ package com.itriuchan.ui;
 
 import cn.hutool.core.io.FileUtil;
 import com.itriuchan.bean.User;
+import com.itriuchan.util.DatabaseUtil;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class RegisterJFrame extends JFrame implements MouseListener {
@@ -58,6 +63,7 @@ public class RegisterJFrame extends JFrame implements MouseListener {
             }
             //5.添加用户
             allUsers.add(new User(username.getText(),password.getText()));
+            addUserToDatabase(username.getText(),password.getText());
             //6.写入文件
             FileUtil.writeLines(allUsers,"E:\\Develop\\Idea\\Empty proj\\Puzzle-Game\\userInfo.txt","UTF-8");
             //7.提示注册成功
@@ -88,12 +94,29 @@ public class RegisterJFrame extends JFrame implements MouseListener {
      *
      * */
     public boolean containsUsername(String username){
-        for (User u : allUsers) {
-            if(u.getUsername().equals(username)){
-                return true;
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM users WHERE username = ?")) {
+            System.out.println(ps);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return true;
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return false;
+    }
+
+    private void addUserToDatabase(String username, String password) {
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement("INSERT INTO users (username, password) VALUES (?, ?)")) {
+            ps.setString(1, username);
+            ps.setString(2, password);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
